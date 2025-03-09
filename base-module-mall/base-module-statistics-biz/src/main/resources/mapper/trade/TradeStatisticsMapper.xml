@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.statistics.dal.mysql.trade.TradeStatisticsMapper">
+
+    <select id="selectOrderCreateCountSumAndOrderPayPriceSumByTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO">
+        SELECT IFNULL(SUM(order_create_count), 0) AS count,
+               IFNULL(SUM(order_pay_price), 0) AS summary
+        FROM trade_statistics
+        WHERE time BETWEEN #{beginTime} AND #{endTime}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectVoByTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.trade.vo.TradeTrendSummaryRespVO">
+        SELECT
+            -- 营业额 = 商品支付金额 + 充值金额
+            SUM(order_pay_price + recharge_pay_price)                                    AS turnoverPrice,
+            SUM(order_pay_price)                                                         AS orderPayPrice,
+            SUM(recharge_pay_price)                                                      AS rechargePrice,
+            -- 支出金额 = 余额支付金额 + 支付佣金金额 + 商品退款金额
+            SUM(wallet_pay_price + brokerage_settlement_price + after_sale_refund_price) AS expensePrice,
+            SUM(wallet_pay_price)                                                        AS walletPayPrice,
+            SUM(brokerage_settlement_price)                                              AS brokerageSettlementPrice,
+            SUM(after_sale_refund_price)                                                 AS afterSaleRefundPrice
+        FROM trade_statistics
+        WHERE time BETWEEN #{beginTime} AND #{endTime}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectExpensePriceByTimeBetween" resultType="java.lang.Integer">
+        SELECT -- 支出金额 = 余额支付金额 + 支付佣金金额 + 商品退款金额
+               SUM(wallet_pay_price + brokerage_settlement_price + after_sale_refund_price) AS expensePrice
+        FROM trade_statistics
+        WHERE deleted = FALSE
+        <if test="beginTime != null">
+            AND time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="getDealTradeDataByTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO">
+        SELECT COUNT(DISTINCT user_id) as count,sum(pay_price) as summary
+        from trade_order
+        where `status` in (10,20,30)
+        <if test="beginTime != null">
+            AND pay_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND pay_time &lt;= #{endTime}
+        </if>
+         and deleted=0
+    </select>
+
+    <select id="getDealTradeUserCountByTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO">
+        SELECT COUNT(DISTINCT user_id) as count
+        from trade_order
+        where `status` in (10,20,30) and type in (0,4) and pay_price &gt; 0
+        <if test="beginTime != null">
+            AND pay_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND pay_time &lt;= #{endTime}
+        </if>
+        and deleted=0
+    </select>
+
+    <select id="getReBuyDataByTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO">
+        SELECT COUNT(DISTINCT user_id) as count,sum(pay_price) as summary
+        from trade_order a
+        where `status` in (10,20,30)
+        AND pay_time >= #{beginTime}
+        AND pay_time &lt;= #{endTime}
+        and Exists(select 1 from trade_order b where a.user_id=b.user_id and b.`status` in (10,20,30) and  pay_time &lt; #{beginTime} limit 0,1)
+        and deleted=0
+    </select>
+
+    <select id="getRefundTradeDataByTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO">
+        SELECT COUNT(DISTINCT b.user_id) as count,sum(a.refund_price) as summary
+        from pay_refund a
+        INNER JOIN trade_order b on a.order_id=b.id
+        where a.`status`=10
+            <if test="beginTime != null">
+                AND a.success_time >= #{beginTime}
+            </if>
+            <if test="endTime != null">
+                AND a.success_time &lt;= #{endTime}
+            </if>
+             and a.deleted=0
+    </select>
+
+    <select id="getNewTradeDataByTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO">
+        SELECT COUNT(DISTINCT user_id) as count,sum(pay_price) as summary
+        from trade_order a
+        where `status` in (10,20,30)
+        <if test="beginTime != null">
+            AND pay_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND pay_time &lt;= #{endTime}
+        </if>
+        and deleted=0
+        and EXISTS (select 1 from member_user b
+            where a.user_id =b.id
+            <if test="beginTime != null">
+                AND b.create_time >= #{beginTime}
+            </if>
+            <if test="endTime != null">
+                AND b.create_time &lt;= #{endTime}
+            </if>
+        )
+    </select>
+
+    <select id="selectDealDetailCount" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        from (
+        SELECT a.id,a.no,
+        case when a.type=0 then '普通订单'
+        else '其他订单' end as type,
+        DATE_FORMAT(a.create_time, '%Y-%m-%d %H:%i:%s') as create_time,
+        case when a.pay_status=1 then '已支付'else '未支付'end pay_status,
+        case when a.status=0 then '待支付'
+        when a.status=10 then '待发货'
+        when a.status=20 then '已发货'
+        when a.status=30 then '已完成'
+        when a.status=40 then '已取消'
+        when a.status=90 then '已退款' else '未知状态'end as status,
+        a.user_id,b.mobile,d.openid,d.unionid,f.spu_id,f.spu_name,
+        replace(replace(replace(SUBSTR(h.properties FROM POSITION('"valueName":' IN h.properties) FOR LENGTH(h.properties)),'"valueName":',''),'"',''),'}]','') as sku_name,
+        f.count,convert(f.pay_price/100,decimal(20,2)) as pay_price,m.name as delivery_name,a.logistics_no
+        from trade_order a
+        LEFT JOIN member_user b on a.user_id=b.id
+        LEFT JOIN system_social_user_bind c on c.user_id=a.user_id
+        LEFT JOIN system_social_user d on d.id=c.social_user_id
+        LEFT JOIN trade_order_item f on a.id=f.order_id
+        LEFT JOIN product_sku h on f.sku_id=h.id
+        LEFT JOIN trade_delivery_express m on a.logistics_id=m.id
+        where a.type in (0) and a.deleted=0
+        <if test="beginTime != null and endTime != null">
+            and a.create_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        ) hh
+    </select>
+
+    <select id="selectDealDetailListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.trade.vo.TradeDetailReqVO">
+        SELECT a.id,a.no,
+        case when a.type=0 then '普通订单'
+        else '其他订单' end as type,
+        DATE_FORMAT(a.create_time, '%Y-%m-%d %H:%i:%s') as create_time,
+        case when a.pay_status=1 then '已支付'else '未支付'end pay_status,
+        case when a.status=0 then '待支付'
+        when a.status=10 then '待发货'
+        when a.status=20 then '已发货'
+        when a.status=30 then '已完成'
+        when a.status=40 then '已取消'
+        when a.status=90 then '已退款' else '未知状态'end as status,
+        a.user_id,b.mobile,d.openid,d.unionid,f.spu_id,f.spu_name,
+        replace(replace(replace(SUBSTR(h.properties FROM POSITION('"valueName":' IN h.properties) FOR LENGTH(h.properties)),'"valueName":',''),'"',''),'}]','') as sku_name,
+        f.count,convert(f.pay_price/100,decimal(20,2)) as pay_price,m.name as delivery_name,a.logistics_no
+        from trade_order a
+        LEFT JOIN member_user b on a.user_id=b.id
+        LEFT JOIN system_social_user_bind c on c.user_id=a.user_id
+        LEFT JOIN system_social_user d on d.id=c.social_user_id
+        LEFT JOIN trade_order_item f on a.id=f.order_id
+        LEFT JOIN product_sku h on f.sku_id=h.id
+        LEFT JOIN trade_delivery_express m on a.logistics_id=m.id
+        where a.type in (0) and a.deleted=0
+        <if test="beginTime != null and endTime != null">
+            and a.create_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        ORDER BY a.create_time,a.id
+        <if test="startIndex != null">
+            LIMIT #{startIndex},#{pageSize}
+        </if>
+    </select>
+
+
+
+    <select id="selectDealTotalCount" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        from (
+        SELECT a.id,a.no,
+        case when a.type=0 then '普通订单'
+        else '其他订单' end as type,
+        DATE_FORMAT(a.create_time, '%Y-%m-%d %H:%i:%s') as create_time,
+        case when a.pay_status=1 then '已支付'else '未支付'end pay_status,
+        case when a.status=0 then '待支付'
+        when a.status=10 then '待发货'
+        when a.status=20 then '已发货'
+        when a.status=30 then '已完成'
+        when a.status=40 then '已取消'
+        when a.status=90 then '已退款' else '未知状态'end as status,
+        a.user_id,b.mobile,d.openid,d.unionid,
+        a.product_count,
+        convert(IFNULL(a.pay_price,0)/100,decimal(20,2)) as total_price,
+        m.name as delivery_name,a.logistics_no
+        from trade_order a
+        LEFT JOIN member_user b on a.user_id=b.id
+        LEFT JOIN system_social_user_bind c on c.user_id=a.user_id
+        LEFT JOIN system_social_user d on d.id=c.social_user_id
+        LEFT JOIN trade_delivery_express m on a.logistics_id=m.id
+        where a.type in (0) and a.deleted=0
+        <if test="beginTime != null and endTime != null">
+            and a.create_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        ) hh
+    </select>
+
+    <select id="selectDealTotalListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.trade.vo.TradeTotalReqVO">
+        SELECT a.id,a.no,
+        case when a.type=0 then '普通订单'
+        else '其他订单' end as type,
+        DATE_FORMAT(a.create_time, '%Y-%m-%d %H:%i:%s') as create_time,
+        case when a.pay_status=1 then '已支付'else '未支付'end pay_status,
+        case when a.status=0 then '待支付'
+        when a.status=10 then '待发货'
+        when a.status=20 then '已发货'
+        when a.status=30 then '已完成'
+        when a.status=40 then '已取消'
+        when a.status=90 then '已退款' else '未知状态'end as status,
+        a.user_id,b.mobile,d.openid,d.unionid,
+        a.product_count,
+        convert(IFNULL(a.pay_price,0)/100,decimal(20,2)) as total_price,
+        m.name as delivery_name,a.logistics_no
+        from trade_order a
+        LEFT JOIN member_user b on a.user_id=b.id
+        LEFT JOIN system_social_user_bind c on c.user_id=a.user_id
+        LEFT JOIN system_social_user d on d.id=c.social_user_id
+        LEFT JOIN trade_delivery_express m on a.logistics_id=m.id
+        where a.type in (0) and a.deleted=0
+        <if test="beginTime != null and endTime != null">
+            and a.create_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        ORDER BY a.create_time,a.id
+        <if test="startIndex != null">
+            LIMIT #{startIndex},#{pageSize}
+        </if>
+    </select>
+
+</mapper>

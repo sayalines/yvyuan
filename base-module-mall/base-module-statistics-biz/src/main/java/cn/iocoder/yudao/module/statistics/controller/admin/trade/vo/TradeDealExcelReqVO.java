@@ -1,0 +1,44 @@
+package cn.iocoder.yudao.module.statistics.controller.admin.trade.vo;
+
+import com.alibaba.excel.annotation.ExcelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.ToString;
+
+import java.math.BigDecimal;
+
+@Schema(description = "管理后台 - 成交数据 Request VO")
+@Data
+@ToString(callSuper = true)
+public class TradeDealExcelReqVO {
+
+    @Schema(description = "总成交人数", example = "1024")
+    @ExcelProperty(value = "总成交人数")
+    private Integer totalUserCount;
+
+    @Schema(description = "新买家人数", example = "1024")
+    @ExcelProperty(value = "新买家人数")
+    private Integer newUserCount;
+
+    @Schema(description = "退款人数", example = "1024")
+    @ExcelProperty(value = "退款人数")
+    private Integer refundUserCount;
+
+    @Schema(description = "总成交金额", example = "1024")
+    @ExcelProperty(value = "总成交金额")
+    private BigDecimal totalDealAmount;
+
+    @Schema(description = "总退款金额", example = "1024")
+    @ExcelProperty(value = "总退款金额")
+    private BigDecimal totalRefundAmount;
+
+    @Schema(description = "客单价", example = "1024")
+    @ExcelProperty(value = "客单价")
+    private BigDecimal avgAmount;
+
+    @Schema(description = "复购率")
+    @ExcelProperty("复购率")
+    private String reBuyRate;
+
+
+}

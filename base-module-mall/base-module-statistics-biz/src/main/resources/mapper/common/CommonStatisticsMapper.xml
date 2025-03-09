@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.statistics.dal.mysql.common.CommonStatisticsMapper">
+
+    <select id="selectProductSubscribeCountByCreateTimeBetween" resultType="java.lang.Long">
+
+        SELECT COUNT(1)
+        from member_message_remind
+        where biz_type=2
+        <if test="beginTime != null">
+            AND create_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time &lt;= #{endTime}
+        </if>
+         and deleted=0
+    </select>
+
+    <select id="selectActiveSubscribeCountByCreateTimeBetween" resultType="java.lang.Long">
+
+        SELECT COUNT(1)
+        from member_message_remind
+        where biz_type=5
+        <if test="beginTime != null">
+            AND create_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time &lt;= #{endTime}
+        </if>
+        and deleted=0
+    </select>
+
+    <select id="selectActiveUserCountByCreateTimeBetween" resultType="java.lang.Long">
+        SELECT COUNT(distinct user_id)
+        from draw_activity_log
+        where  deleted=0 and biz_type=3
+        <if test="beginTime != null">
+            AND create_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time &lt;= #{endTime}
+        </if>
+    </select>
+
+</mapper>

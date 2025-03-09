@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>cn.iocoder.boot</groupId>
+    <artifactId>yudao</artifactId>
+    <version>2.0.0-jdk8-snapshot</version>
+  </parent>
+  <groupId>cn.iocoder.boot</groupId>
+  <artifactId>base-module-pay</artifactId>
+  <version>2.0.0-jdk8-snapshot</version>
+  <packaging>pom</packaging>
+  <name>${project.artifactId}</name>
+  <description>pay 模块，我们放支付业务，提供业务的支付能力。
+        例如说：商户、应用、支付、退款等等</description>
+  <modules>
+    <module>base-module-pay-api</module>
+    <module>base-module-pay-biz</module>
+  </modules>
+  <properties>
+    <revision>2.0.0-jdk8-snapshot</revision>
+  </properties>
+</project>

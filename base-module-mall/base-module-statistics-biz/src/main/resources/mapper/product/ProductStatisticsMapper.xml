@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.statistics.dal.mysql.product.ProductStatisticsMapper">
+
+    <select id="selectProductListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductRespVO">
+        SELECT COUNT(1) as hit_count,COUNT(DISTINCT user_id) as visit_count
+        from infra_api_access_log a
+        where a.type=1 and a.user_type=1 and a.user_id &lt;&gt; 0 and a.deleted=0
+        and a.request_url='pages/vipShiping/detail' and IFNULL(a.biz_id,'') &lt;&gt; ''
+        <if test="beginTime != null and endTime != null">
+            and a.begin_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+    </select>
+
+    <select id="selectProductStatListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductRespVO">
+        SELECT sum(hit_count) as hit_count,COUNT(DISTINCT user_id) as visit_count
+        from product_visit_log a
+        where 1=1
+        <if test="beginTime != null and endTime != null">
+            and a.stat_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+    </select>
+
+    <select id="selectAddCartListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductRespVO">
+        SELECT COUNT(DISTINCT a.user_id) as cart_user_count,sum(a.count) as cart_count
+        from infra_api_access_log a
+        where a.type=0 and a.user_type=1 and a.user_id &lt;&gt; 0 and a.deleted=0
+        <if test="beginTime != null and endTime != null">
+            and a.begin_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        and a.request_url in ('/rest/api/cart/now-buy','/rest/api/cart/add')
+    </select>
+
+    <select id="selectAddCartStatListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductRespVO">
+        SELECT COUNT(DISTINCT a.user_id) as cart_user_count,sum(a.cart_count) as cart_count
+        from product_visit_log a
+        where a.cart_count &gt; 0
+        <if test="beginTime != null and endTime != null">
+            and a.stat_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+    </select>
+
+    <select id="selectOrderListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductRespVO">
+        SELECT COUNT(DISTINCT user_id) as order_user_count
+        from trade_order
+        where type = 0
+        <if test="beginTime != null">
+            AND create_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time &lt;= #{endTime}
+        </if>
+        and deleted=0
+    </select>
+
+    <select id="selectPayOrderListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductRespVO">
+        SELECT count(1) as pay_order_count,COUNT(DISTINCT user_id) as pay_user_count,
+               convert(sum(pay_price)/100,decimal(20,2)) as pay_amount,
+               avg(TIMESTAMPDIFF(MICROSECOND, pay_time, delivery_time)/1000) as delivery_time
+        from trade_order
+        where `status` in (10,20,30) AND type = 0
+        <if test="beginTime != null">
+            AND pay_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND pay_time &lt;= #{endTime}
+        </if>
+        and deleted=0
+    </select>
+
+    <select id="selectProductDetailCount" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        from (
+        SELECT a.biz_id as spu_id,max(title) as spu_name,COUNT(1) as hit_count,COUNT(DISTINCT user_id) as visit_count
+        from infra_api_access_log a
+        where a.type=1 and a.user_type=1 and a.user_id &lt;&gt; 0 and a.deleted=0
+        and a.request_url='pages/vipShiping/detail' and IFNULL(a.biz_id,'') &lt;&gt; ''
+        <if test="beginTime != null and endTime != null">
+            and a.begin_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        GROUP BY a.biz_id
+        ) hh
+    </select>
+
+    <select id="selectProductDetailListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductDetailRespVO">
+        SELECT a.biz_id as spu_id,max(title) as spu_name,COUNT(1) as hit_count,COUNT(DISTINCT user_id) as visit_count
+        from infra_api_access_log a
+        where a.type=1 and a.user_type=1 and a.user_id &lt;&gt; 0 and a.deleted=0
+        and a.request_url='pages/vipShiping/detail' and IFNULL(a.biz_id,'') &lt;&gt; ''
+        <if test="beginTime != null and endTime != null">
+            and a.begin_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        GROUP BY a.biz_id
+        <if test="startIndex != null">
+            LIMIT #{startIndex},#{pageSize}
+        </if>
+    </select>
+
+    <select id="selectAddCartDetailListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductDetailRespVO">
+        SELECT b.spu_id,COUNT(DISTINCT a.user_id) as cart_user_count,sum(a.count) as cart_count
+        from infra_api_access_log a
+        INNER JOIN product_sku b on a.biz_id=b.id
+        where a.type=0 and a.user_type=1 and a.user_id &lt;&gt; 0 and a.deleted=0
+        and b.spu_id in
+        <foreach collection="spuIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="beginTime != null and endTime != null">
+            and a.begin_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        and a.request_url in ('/rest/api/cart/now-buy','/rest/api/cart/add')
+        GROUP BY b.spu_id
+    </select>
+
+    <select id="selectProductDetailStatCount" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        from (
+        SELECT a.spu_id,max(a.spu_name) as spu_name,sum(hit_count) as hit_count,COUNT(DISTINCT user_id) as visit_count
+        from product_visit_log a
+        where 1=1
+        <if test="beginTime != null and endTime != null">
+            and a.stat_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        GROUP BY a.spu_id
+        ) hh
+    </select>
+
+    <select id="selectProductDetailStatListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductDetailRespVO">
+        SELECT a.spu_id,max(a.spu_name) as spu_name,sum(hit_count) as hit_count,COUNT(DISTINCT user_id) as visit_count
+        from product_visit_log a
+        where 1=1
+        <if test="beginTime != null and endTime != null">
+            and a.stat_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        GROUP BY a.spu_id
+        <if test="startIndex != null">
+            LIMIT #{startIndex},#{pageSize}
+        </if>
+    </select>
+
+    <select id="selectAddCartDetailStatListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductDetailRespVO">
+        SELECT a.spu_id,COUNT(DISTINCT a.user_id) as cart_user_count,sum(a.cart_count) as cart_count
+        from product_visit_log a
+        where 1=1
+        and a.spu_id in
+        <foreach collection="spuIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="beginTime != null and endTime != null">
+            and a.stat_time BETWEEN #{beginTime} AND #{endTime}
+        </if>
+        GROUP BY a.spu_id
+    </select>
+
+    <select id="selectOrderDetailListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductDetailRespVO">
+        SELECT b.spu_id,COUNT(DISTINCT a.user_id) as order_user_count
+        from trade_order a
+        INNER JOIN trade_order_item b on a.id=b.order_id
+        where a.type = 0
+        and b.spu_id in
+        <foreach collection="spuIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="beginTime != null">
+            AND a.create_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND a.create_time &lt;= #{endTime}
+        </if>
+        and a.deleted=0
+        GROUP BY b.spu_id
+    </select>
+
+    <select id="selectPayOrderDetailListByCreateTimeBetween"
+            resultType="cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductDetailRespVO">
+        SELECT b.spu_id,count(DISTINCT b.order_id) as pay_order_count,COUNT(DISTINCT a.user_id) as pay_user_count
+             ,convert(sum(b.pay_price)/100,decimal(20,2)) as pay_amount,
+            avg(TIMESTAMPDIFF(MICROSECOND, a.pay_time, a.delivery_time)/1000) as delivery_time
+        from trade_order a
+        INNER JOIN trade_order_item b on a.id=b.order_id
+        where a.`status` in (10,20,30) AND a.type = 0
+        and b.spu_id in
+        <foreach collection="spuIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        <if test="beginTime != null">
+            AND a.pay_time >= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            AND a.pay_time &lt;= #{endTime}
+        </if>
+        and a.deleted=0
+        GROUP BY b.spu_id
+    </select>
+
+</mapper>

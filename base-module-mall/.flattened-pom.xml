@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>cn.iocoder.boot</groupId>
+    <artifactId>yudao</artifactId>
+    <version>2.0.0-jdk8-snapshot</version>
+  </parent>
+  <groupId>cn.iocoder.boot</groupId>
+  <artifactId>base-module-mall</artifactId>
+  <version>2.0.0-jdk8-snapshot</version>
+  <packaging>pom</packaging>
+  <name>${project.artifactId}</name>
+  <description>商城大模块，由 product 商品、promotion 营销、trade 交易、statistics 统计等组成</description>
+  <modules>
+    <module>base-module-promotion-api</module>
+    <module>base-module-promotion-biz</module>
+    <module>base-module-product-api</module>
+    <module>base-module-product-biz</module>
+    <module>base-module-trade-api</module>
+    <module>base-module-trade-biz</module>
+    <module>base-module-statistics-api</module>
+    <module>base-module-statistics-biz</module>
+  </modules>
+</project>
