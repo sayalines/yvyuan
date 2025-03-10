@@ -96,4 +96,6 @@ public interface ErrorCodeConstants {
     ErrorCode QUESTION_NOT_EXISTS = new ErrorCode(1_029_001_001, "问题反馈不存在");
     // ========== 文章访问日志 TODO 补充编号 ==========
     ErrorCode ARTICLE_VISIT_NOT_EXISTS = new ErrorCode(1_030_001_001, "文章访问日志不存在");
+    // ========== 论坛文章 TODO 补充编号 ==========
+    ErrorCode COMMUNITY_NOT_EXISTS = new ErrorCode(1_008_001_000, "论坛文章不存在");
 }
