@@ -8,7 +8,7 @@
     <version>2.0.0-jdk8-snapshot</version>
   </parent>
   <groupId>cn.iocoder.boot</groupId>
-  <artifactId>base-server</artifactId>
+  <artifactId>penxun-server</artifactId>
   <version>2.0.0-jdk8-snapshot</version>
   <name>${project.artifactId}</name>
   <description>后端 Server 的主项目，通过引入需要 base-module-xxx 的依赖，

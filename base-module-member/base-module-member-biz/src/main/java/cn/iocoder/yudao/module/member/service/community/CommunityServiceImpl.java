@@ -32,10 +32,12 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     public Long createCommunity(CommunitySaveReqVO createReqVO) {
-        // 插入
+        createReqVO.setUserId(getLoginUserId());
+        System.out.println("createReqVO.getUserId() = " + getLoginUserId());
         CommunityDO community = BeanUtils.toBean(createReqVO, CommunityDO.class);
+        System.out.println("community.getUserId() = " + getLoginUserId());
+        System.out.println("community.getUserId() = " + community.getUserId());
         communityMapper.insert(community);
-        // 返回
         return community.getId();
     }
 

@@ -9,6 +9,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppLinkInput: typeof import('./../components/AppLinkInput/index.vue')['default']
     AppLinkSelectDialog: typeof import('./../components/AppLinkInput/AppLinkSelectDialog.vue')['default']
+    Article: typeof import('./../api/infra/article/index.ts')['default']
+    ArticleForm: typeof import('./../views/infra/article/ArticleForm.vue')['default']
     Backtop: typeof import('./../components/Backtop/src/Backtop.vue')['default']
     CardTitle: typeof import('./../components/Card/src/CardTitle.vue')['default']
     ColorInput: typeof import('./../components/ColorInput/index.vue')['default']

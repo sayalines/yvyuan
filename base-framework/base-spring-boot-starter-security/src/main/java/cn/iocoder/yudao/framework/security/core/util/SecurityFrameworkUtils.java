@@ -44,10 +44,12 @@ public class SecurityFrameworkUtils {
             token = request.getParameter(parameterName);
         }
         if (!StringUtils.hasText(token)) {
+            System.out.println("token为空");
             return null;
         }
         // 2. 去除 Token 中带的 Bearer
         int index = token.indexOf(AUTHORIZATION_BEARER + " ");
+        System.out.println("token为"+token);
         return index >= 0 ? token.substring(index + 7).trim() : token;
     }
 
@@ -59,6 +61,7 @@ public class SecurityFrameworkUtils {
     public static Authentication getAuthentication() {
         SecurityContext context = SecurityContextHolder.getContext();
         if (context == null) {
+            System.out.println("登录信息仓库为空");
             return null;
         }
         return context.getAuthentication();
@@ -73,6 +76,7 @@ public class SecurityFrameworkUtils {
     public static LoginUser getLoginUser() {
         Authentication authentication = getAuthentication();
         if (authentication == null) {
+            System.out.println("登录状态为空");
             return null;
         }
         return authentication.getPrincipal() instanceof LoginUser ? (LoginUser) authentication.getPrincipal() : null;
@@ -86,6 +90,7 @@ public class SecurityFrameworkUtils {
     @Nullable
     public static Long getLoginUserId() {
         LoginUser loginUser = getLoginUser();
+        System.out.println("loginUser = " + loginUser);
         return loginUser != null ? loginUser.getId() : null;
     }
 

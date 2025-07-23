@@ -15,7 +15,7 @@ public class CommunitySaveReqVO {
     private Long id;
 
     @Schema(description = "用户ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "9893")
-    @NotNull(message = "用户ID不能为空")
+//    @NotNull(message = "用户ID不能为空")
     private Long userId;
 
     @Schema(description = "品牌ID", example = "32648")
